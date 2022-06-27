@@ -374,6 +374,12 @@ RCT_EXPORT_METHOD(openPicker:(NSDictionary *)options
             }
             
             [imagePickerController setModalPresentationStyle: UIModalPresentationFullScreen];
+            if (@available(iOS 15.0, *)) {
+                UINavigationBarAppearance *appearance = [UINavigationBarAppearance new];
+                [appearance configureWithOpaqueBackground];
+                [appearance setBackgroundColor:UIColorFromRGB(0x2998ff)];
+                [[UINavigationBar appearance] setScrollEdgeAppearance:appearance];
+            }   
             [[self getRootVC] presentViewController:imagePickerController animated:YES completion:nil];
         });
     }];
