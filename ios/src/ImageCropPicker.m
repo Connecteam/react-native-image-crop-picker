@@ -378,6 +378,7 @@ RCT_EXPORT_METHOD(openPicker:(NSDictionary *)options
                 UINavigationBarAppearance *appearance = [UINavigationBarAppearance new];
                 [appearance configureWithOpaqueBackground];
                 [appearance setBackgroundColor:UIColorFromRGB(0x2998ff)];
+                [[UINavigationBar appearance] setStandardAppearance:appearance];
                 [[UINavigationBar appearance] setScrollEdgeAppearance:appearance];
             }   
             [[self getRootVC] presentViewController:imagePickerController animated:YES completion:nil];
