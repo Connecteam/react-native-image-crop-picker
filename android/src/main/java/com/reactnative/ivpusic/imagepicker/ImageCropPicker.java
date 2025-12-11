@@ -558,7 +558,7 @@ class ImageCropPicker implements ActivityEventListener {
             if (mCurrentMediaPath != null) {
                 if (mCurrentMediaPath.startsWith("file://")) {
                     Log.d("image-crop-picker", "resolveRealPath mCurrentMediaPath: startsWith file:// " + mCurrentMediaPath);
-                    path = mCurrentMediaPath.substring("file://".length());
+                    return mCurrentMediaPath.substring("file://".length());
                 } else if (mCurrentMediaPath.startsWith("file:")) {
                     Log.d("image-crop-picker", "resolveRealPath mCurrentMediaPath: startsWith file: " + mCurrentMediaPath);
                     return mCurrentMediaPath.substring("file:".length());
