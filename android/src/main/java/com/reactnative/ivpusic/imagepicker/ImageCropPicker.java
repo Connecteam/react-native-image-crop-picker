@@ -552,8 +552,21 @@ class ImageCropPicker implements ActivityEventListener {
 
     private String resolveRealPath(Activity activity, Uri uri, boolean isCamera) throws IOException {
         String path;
-
+        Log.d("image-crop-picker", "resolveRealPath uri: " + uri);
+        // PATCH – resolve camera file path correctly
         if (isCamera) {
+            if (mCurrentMediaPath != null) {
+                if (mCurrentMediaPath.startsWith("file://")) {
+                    Log.d("image-crop-picker", "resolveRealPath mCurrentMediaPath: startsWith file:// " + mCurrentMediaPath);
+                    path = mCurrentMediaPath.substring("file://".length());
+                } else if (mCurrentMediaPath.startsWith("file:")) {
+                    Log.d("image-crop-picker", "resolveRealPath mCurrentMediaPath: startsWith file: " + mCurrentMediaPath);
+                    return mCurrentMediaPath.substring("file:".length());
+                } else {
+                    Log.d("image-crop-picker", "resolveRealPath mCurrentMediaPath: else " + mCurrentMediaPath);
+                    return mCurrentMediaPath;
+                }
+            }
             Uri mediaUri = Uri.parse(mCurrentMediaPath);
             path = mediaUri.getPath();
         } else {
@@ -581,6 +594,7 @@ class ImageCropPicker implements ActivityEventListener {
             }
         }
 
+        Log.d("image-crop-picker", "resolveRealPath path: " + path);
         return path;
     }
 
@@ -641,8 +655,11 @@ class ImageCropPicker implements ActivityEventListener {
 
         BitmapFactory.decodeFile(path, options);
 
+        // PATCH – add debug info for invalid images
         if (options.outMimeType == null || options.outWidth == 0 || options.outHeight == 0) {
-            throw new Exception("Invalid image selected");
+            File f = new File(path);
+            long size = f.exists() ? f.length() : -1;
+            throw new Exception("Invalid image selected (path=" + path + ", size=" + size + ")");
         }
 
         return options;
@@ -808,8 +825,15 @@ class ImageCropPicker implements ActivityEventListener {
         if (resultCode == Activity.RESULT_CANCELED) {
             resultCollector.notifyProblem(E_PICKER_CANCELLED_KEY, E_PICKER_CANCELLED_MSG);
         } else if (resultCode == Activity.RESULT_OK) {
+            // PATCH – prefer returned content:// URI when exists
             Uri uri = mCameraCaptureURI;
-
+            boolean isCameraResult = true;
+            Log.d("image-crop-picker", "cameraPickerResult uri: " + uri);
+            if (data != null && data.getData() != null) {
+                uri = data.getData(); // device ignored EXTRA_OUTPUT
+                isCameraResult = false;
+            }
+            Log.d("image-crop-picker", "cameraPickerResult uri: " + uri);
             if (uri == null) {
                 resultCollector.notifyProblem(E_NO_IMAGE_DATA_FOUND, "Cannot resolve image url");
                 return;
@@ -896,16 +920,21 @@ class ImageCropPicker implements ActivityEventListener {
     private File createImageFile() throws IOException {
 
         String imageFileName = "image-" + UUID.randomUUID().toString();
+        // PATCH - handle null from getExternalFilesDir
         File path = this.reactContext.getExternalFilesDir(Environment.DIRECTORY_PICTURES);
 
-        if (!path.exists() && !path.isDirectory()) {
+        if (path == null) {
+            path = new File(this.reactContext.getCacheDir(), "Pictures");
+        }
+
+        if (!path.exists()) {
             path.mkdirs();
         }
 
         File image = File.createTempFile(imageFileName, ".jpg", path);
 
-        // Save a file: path for use with ACTION_VIEW intents
-        mCurrentMediaPath = "file:" + image.getAbsolutePath();
+        // PATCH – fix file URI
+        mCurrentMediaPath = "file://" + image.getAbsolutePath();
 
         return image;
 
@@ -914,16 +943,21 @@ class ImageCropPicker implements ActivityEventListener {
     private File createVideoFile() throws IOException {
 
         String videoFileName = "video-" + UUID.randomUUID().toString();
+        // PATCH - handle null from getExternalFilesDir
         File path = this.reactContext.getExternalFilesDir(Environment.DIRECTORY_PICTURES);
 
-        if (!path.exists() && !path.isDirectory()) {
+        if (path == null) {
+            path = new File(this.reactContext.getCacheDir(), "Pictures");
+        }
+
+        if (!path.exists()) {
             path.mkdirs();
         }
 
         File video = File.createTempFile(videoFileName, ".mp4", path);
 
-        // Save a file: path for use with ACTION_VIEW intents
-        mCurrentMediaPath = "file:" + video.getAbsolutePath();
+        // PATCH – fix file URI
+        mCurrentMediaPath = "file://" + video.getAbsolutePath();
 
         return video;
 
